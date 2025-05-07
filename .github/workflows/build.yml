@@ -1,0 +1,36 @@
+name: Build XiaoQing-ROM
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set up environment
+      run: |
+        sudo apt update
+        sudo apt install repo git -y
+
+    - name: Initialize LineageOS
+      run: |
+        mkdir lineage && cd lineage
+        repo init -u https://github.com/LineageOS/android.git -b lineage-20.0
+        repo sync -j4
+
+    - name: Clone device tree & XiaoQing module
+      run: |
+        cd lineage
+        git clone https://github.com/TheMuppets/proprietary_vendor_xiaomi -b lineage-20.0 vendor/xiaomi
+        git clone https://github.com/xiy-ue/device_xiaomi_joyeuse device/xiaomi/joyeuse
+        git clone https://github.com/xiy-ue/xiaoqing-module app/xiaoqing
+
+    - name: Start build
+      run: |
+        cd lineage
+        . build/envsetup.sh
+        lunch lineage_joyeuse-userdebug
+        make bacon -j$(nproc)
